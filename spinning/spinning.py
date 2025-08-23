@@ -1,5 +1,5 @@
 # Бот для ловли рыбы в RussianFishing4 на спиннинг
-
+import datetime
 import random
 import sys
 
@@ -7,21 +7,22 @@ from PIL import ImageGrab
 import time
 import pyautogui
 from aiogram import Bot, Dispatcher, types
-from aiogram.utils import executor
+import aiogram.filters
 import threading
 import keyboard
+import pytesseract
 
 count = 0
 bot = Bot(token="6330587531:AAGdkhe2x3lYVaNIPtARomCQeIB266Nf_Yg")
-dp = Dispatcher(bot)
+dp = Dispatcher()
 zach = 0
 trof = 0
 blue = 0
 flag = True
-img_grab = None
+# img_grab = None
 
 
-@dp.message_handler(commands=["start"])
+@dp.message(aiogram.filters.Command('start'))
 async def cmd_start(message: types.Message):
     await bot.send_message(message.from_user.id, f'Кол-во рыб: {count}\n'
                                                  f'Зачетных: {zach}\n'
@@ -29,19 +30,14 @@ async def cmd_start(message: types.Message):
                                                  f'Редких трофеев: {blue}')
 
 
-@dp.message_handler(commands=["screen"])
+@dp.message(aiogram.filters.Command("screen"))
 async def screen(message: types.Message):
     img_grab.save('чпок.png')
-    with open('чпок.png', 'rb') as photo:
+    with open('../чпок.png', 'rb') as photo:
         await bot.send_photo(message.from_user.id, photo)
 
 
-@dp.message_handler(commands=[''])
-async def trophy(message: types.Message):
-    pass
-
-
-@dp.message_handler(commands=['alt_f4'])
+@dp.message(aiogram.filters.Command('alt_f4'))
 async def out(message: types.Message):
     await bot.send_message(message.from_user.id, 'Give me your password: ')
     print(message.text)
@@ -122,15 +118,42 @@ def new_throwing():
     time.sleep(4)  # time.sleep(4) для джиг
 
 
+def ready_to_throwing():
+    if searching_coincidence(recognize_the_text(), 'снасть готова к забросу'):
+        return True
+    return False
+
+
+def searching_coincidence(st: str, pat='движение в придонном слое.'):
+    string = st.lower()
+    count = 0
+    for i in range(len(min(string, pat, key=len))):
+        if string[i] == pat[i]:
+            count += 1
+    print((count / len(pat)) * 100)
+    if (count / len(pat)) * 100 > 50:
+        return True
+    return False
+
+
+# return text from image
+def recognize_the_text():
+    pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract'
+    image = ImageGrab.grab().crop((530, 1020, 730, 1040))
+    text = pytesseract.image_to_string(image, lang='rus')
+    print(text)
+    return text
+
+
 # def new_throwing():  # 70%
 #     pyautogui.mouseDown(button='left')
 #     time.sleep(1.7)
 #     pyautogui.mouseUp(button='left')
 #     time.sleep(3)
 
-def ready_to_throwing():
-    img = img_grab.crop((682, 1029, 683, 1030)).load()[0, 0]
-    return True if img[0] > 170 and img[1] > 170 and img[2] > 170 else False
+# def ready_to_throwing():
+#     img = img_grab.crop((682, 1029, 683, 1030)).load()[0, 0]
+#     return True if img[0] > 170 and img[1] > 170 and img[2] > 170 else False
 
 
 def button_press_on_screen():
@@ -199,6 +222,8 @@ def main(pause, key, key1, key2):
     pyautogui.mouseDown(button='left')
     count = 0
     while True:
+        # tm = datetime.datetime.now()
+
         img_grab = ImageGrab.grab()
         if eat():
             pyautogui.typewrite([key2, key2], interval=0.2)
@@ -221,7 +246,7 @@ def main(pause, key, key1, key2):
             # pyautogui.click(button='right')
             pyautogui.mouseUp(button='left')
             # pyautogui.keyUp(key='shift')
-            time.sleep(1.2)
+            time.sleep(2)
             # pyautogui.keyDown(key='shift')
             pyautogui.mouseDown(button='left')
 

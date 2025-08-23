@@ -1,7 +1,7 @@
 from PyQt5.QtWidgets import QMainWindow, QApplication
 from interface import Ui_MainWindow
 import sys
-from spinning2 import func1
+from spinning import func1
 import time
 
 
@@ -13,7 +13,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
     def run(self):
         time.sleep(2)
-        default = [150, '5', '4', '9']
+        default = [80, '5', '4', '9']
         pause, food, food2, key = self.pause.text(), self.food.text(), self.food2.text(), self.lineEdit.text()
         lst = [pause, food, food2, key]
         for i in range(len(lst)):

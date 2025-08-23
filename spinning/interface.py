@@ -60,7 +60,7 @@ class Ui_MainWindow(object):
         _translate = QtCore.QCoreApplication.translate
         MainWindow.setWindowTitle(_translate("MainWindow", "MainWindow"))
         self.play.setText(_translate("MainWindow", "Запустить"))
-        self.pause.setPlaceholderText(_translate("MainWindow", "150"))
+        self.pause.setPlaceholderText(_translate("MainWindow", "80"))
         self.label.setText(_translate("MainWindow", " Пауза:"))
         self.label_2.setText(_translate("MainWindow", "  Слот Еды:"))
         self.food.setPlaceholderText(_translate("MainWindow", "5"))
