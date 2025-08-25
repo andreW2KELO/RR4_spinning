@@ -1,10 +1,9 @@
-# Бот для ловли рыбы в RussianFishing4 на фидер
+# Бот для ловли рыбы в RussianFishing4 на донку
 
 """Идеи
 1) Чтобы лучше различались пиксели (ночью белые пиксели темнее) разделить прочтение текса на ночь и день
 2) Анализировать чат (вести подсчет сходов)
 """
-
 import cv2
 import numpy as np
 import time
@@ -17,6 +16,7 @@ from difflib import SequenceMatcher
 import keyboard
 import mouse
 import pytesseract
+import win32gui
 from PIL import ImageGrab, Image, ImageOps
 
 from aiogram import Bot, Dispatcher, types, Router
@@ -27,7 +27,8 @@ TOKEN = "6330587531:AAGdkhe2x3lYVaNIPtARomCQeIB266Nf_Yg"
 
 pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract'
 
-template = cv2.imread('fish.png', cv2.IMREAD_COLOR)
+template_fish = cv2.imread('fish.png', cv2.IMREAD_COLOR)
+template_reel = cv2.imread('reel.png', cv2.IMREAD_COLOR)
 
 router = Router()
 
@@ -36,6 +37,25 @@ trof = 0
 blue = 0
 count = 0
 img_grab = ImageGrab.grab()
+
+
+def get_rf4_client_rect(title_substr="Russian Fishing 4"):
+    hwnd = None
+
+    def enum_handler(h, _):
+        nonlocal hwnd
+        if win32gui.IsWindowVisible(h):
+            if title_substr.lower() in win32gui.GetWindowText(h).lower():
+                hwnd = h
+
+    win32gui.EnumWindows(enum_handler, None)
+    if not hwnd:
+        raise RuntimeError("Окно RF4 не найдено")
+
+    return win32gui.GetClientRect(hwnd)
+
+
+win_size = get_rf4_client_rect()
 
 
 @router.message(Command('start'))
@@ -62,7 +82,7 @@ def run_bot_thread():
         bot = Bot(TOKEN)
         dp = Dispatcher()
         dp.include_router(router)
-        await dp.start_polling(bot, allowed_updates=dp.resolve_used_update_types())
+        await dp.start_polling(bot, handle_signals=False, allowed_updates=dp.resolve_used_update_types())
 
     asyncio.run(_run())
 
@@ -104,12 +124,12 @@ def release_all_button():
 
 
 def button_v_sadok_on_screen():
-    imgage = ImageGrab.grab().crop((790, 949, 876, 970))
-    return searching_coincidence(recognize_the_text(imgage), 'в садок')
+    image = img_grab.crop((790, 949, 876, 970))
+    return searching_coincidence(recognize_the_text(image), 'в садок')
 
 
 def is_ready_to_throwing():
-    image = ImageGrab.grab().crop((530, 1020, 730, 1040))
+    image = img_grab.crop((530, 1020, 730, 1040))
     return searching_coincidence(recognize_the_text(image), 'снасть готова к забросу')
 
 
@@ -119,9 +139,6 @@ def similarity(str1: str, str2: str) -> float:
 
 
 def searching_coincidence(text_lst: list, pat='движение в придонном слое.'):
-    print(f'Распознанные текста: {text_lst}\n'
-          f'Заданный патерн: {pat}\n'
-          )
     for st in text_lst:
         if similarity(st, pat) > 50:
             return True
@@ -175,7 +192,7 @@ def zach_trof_blue_just(arr: np.ndarray):
 
 
 @timeit
-def good_fish():
+def is_good_fish():
     global count, zach, trof, blue
 
     img = ImageGrab.grab(bbox=(600, 110, 900, 130)).convert("RGB")
@@ -197,20 +214,32 @@ def good_fish():
     return True
 
 
-def trigger_to_elevate_rod():
-    img = img_grab.crop((1235, 1009, 1236, 1010)).load()[0, 0]
-    img2 = img_grab.crop((1235, 1011, 1236, 1012)).load()[0, 0]
+def trigger_to_elevate_rod_if_not_rainbow_line():
+    tmp = 0 if win_size[-1] == 1050 else 2
+    img = img_grab.crop((1235, 1011 - tmp, 1236, 1012 - tmp)).load()[0, 0]
 
-    return ((img[0] > 170 and img[1] > 170 and img[2] > 170)
-            or (img2[0] > 170 and img2[1] > 170 and img2[2] > 170))
+    return img[0] > 170 and img[1] > 170 and img[2] > 170
+
+
+def trigger_to_elevate_rod_if_have_rainbow_line(threshold=0.9):
+    tmp = 0 if win_size[-1] == 1050 else 1
+
+    screenshot = cv2.cvtColor(np.array(ImageGrab.grab(
+        bbox=(1157, 1019 - tmp, 1177, 1030 - tmp))
+    ), cv2.COLOR_RGB2BGR)
+
+    result = cv2.matchTemplate(screenshot, template_reel, cv2.TM_CCOEFF_NORMED)
+    _, max_val, _, _ = cv2.minMaxLoc(result)
+
+    return max_val >= threshold
 
 
 @timeit
-def new_throwing():
+def new_throwing(percent=57):
     mouse.press(button='left')
-    time.sleep(1.2)
+    time.sleep(percent / 100 / 0.57)
     mouse.release(button='left')
-    time.sleep(2)
+    time.sleep((percent / 100) * 1.9 / 0.57)
     mouse.press(button='left')
     time.sleep(0.1)
     mouse.release(button='left')
@@ -229,40 +258,70 @@ def is_bite_indicator_on_image(img, threshold=10):
     arr = np.array(img.convert("RGB"), dtype=np.uint8)
     mask = (arr[..., 0] > 190) & (arr[..., 1] > 190) & (arr[..., 2] > 190)
 
-    return np.count_nonzero(mask) < threshold
+    return np.count_nonzero(mask) > threshold
 
 
 @timeit
-def catching_fish():
+def catching_fish(is_rainbow_line):
     global img_grab
+
+    is_rainbow_line = is_rainbow_line == 'да'
+
     mouse.press(button='left')
     keyboard.press('shift')
+
     while True:
         img_grab = ImageGrab.grab()
-        if trigger_to_elevate_rod():
+        is_ready = is_ready_to_throwing()
+        is_button_on_screen = button_v_sadok_on_screen()
+
+        is_trigger_elevate = trigger_to_elevate_rod_if_not_rainbow_line() \
+            if is_rainbow_line else trigger_to_elevate_rod_if_have_rainbow_line()
+
+        if is_ready:
+            break
+
+        if is_button_on_screen:
+            time.sleep(0.3)
+            do_choice_take_or_throw_away()
+            break
+
+        if is_trigger_elevate:
             mouse.press(button='right')
             while True:
                 img_grab = ImageGrab.grab()
-                if is_ready_to_throwing():
+                is_ready = is_ready_to_throwing()
+                is_button_on_screen = button_v_sadok_on_screen()
+                is_trigger_elevate = trigger_to_elevate_rod_if_not_rainbow_line() \
+                    if is_rainbow_line else trigger_to_elevate_rod_if_have_rainbow_line()
+
+                if not is_trigger_elevate and not is_button_on_screen and not is_ready:
                     trig = 1
                     break
-                if button_v_sadok_on_screen():
+                if is_ready:
+                    trig = 1
+                    break
+                if is_button_on_screen:
                     trig = 2
                     break
-                time.sleep(1)
+                time.sleep(0.5)
             mouse.release(button='right')
             if trig == 2:
                 time.sleep(0.3)
-                if good_fish():
-                    press_take_fish()
-                else:
-                    press_throw_away_fish()
-            break
+                do_choice_take_or_throw_away()
+                break
 
     mouse.release(button='left')
     keyboard.release('shift')
 
     time.sleep(1)
+
+
+def do_choice_take_or_throw_away():
+    if is_good_fish():
+        press_take_fish()
+    else:
+        press_throw_away_fish()
 
 
 @timeit
@@ -272,6 +331,7 @@ def first_white_px_detected(img, x=0, y=0, thr=200):
     mp = mask[:, :-1] & mask[:, 1:]
     mp_trans = mp.T
     idxs = np.flatnonzero(mp_trans.ravel())
+
     if idxs.size == 0:
         return None
 
@@ -284,80 +344,75 @@ def first_white_px_detected(img, x=0, y=0, thr=200):
 
 @timeit
 def detected_rod(n_tips=3, min_dx=50):
+    n_tips = int(n_tips)
+    min_dx = int(min_dx)
+
     img = ImageGrab.grab()
     size = 15
     lst = [400, 400]
     res = []
-
-    for i in range(n_tips):
-        temp = img.crop((lst[0], lst[1], 1700, 900))
-        is_detected_rod = first_white_px_detected(temp, x=lst[0], y=lst[1])
-        if is_detected_rod is not None:
-            x, y, i, j = is_detected_rod
-            res.append([x - size, y - size, x + size, y + size])
-            lst[0] = i + min_dx
-        else:
-            res.append(None)
-
-    if None in res:
-        print(f"{res}\n"
-              f"Какая то из удочек не была зафиксирована")
+    while True:
+        for i in range(n_tips):
+            temp = img.crop((lst[0], lst[1], 1700, 900))
+            is_detected_rod = first_white_px_detected(temp, x=lst[0], y=lst[1])
+            if is_detected_rod is not None:
+                x, y, i, j = is_detected_rod
+                res.append([x - size, y - size, x + size, y + size])
+                lst[0] = i + min_dx
+        if len(res) != n_tips:
+            print(f'\nУдочек зафиксировано меньше чем {n_tips}\n'
+                  f'А именно было найдено {len(res)} удилищ\n')
+            res = []
+            lst = [400, 400]
+            img = ImageGrab.grab()
+        if len(res) == n_tips:
+            break
 
     return res
 
 
 @timeit
 def is_fish_on_hook(threshold=0.6):  # threshold — точность совпадения (0.8 = 80%).
-    global template
+    global template_fish
 
-    screenshot = ImageGrab.grab().crop((532, 1008, 567, 1041))
+    screenshot = ImageGrab.grab(bbox=(532, 1008, 567, 1041))
     screenshot = cv2.cvtColor(np.array(screenshot), cv2.COLOR_RGB2BGR)
 
-    result = cv2.matchTemplate(screenshot, template, cv2.TM_CCOEFF_NORMED)
+    result = cv2.matchTemplate(screenshot, template_fish, cv2.TM_CCOEFF_NORMED)
     _, max_val, _, max_loc = cv2.minMaxLoc(result)
-    print(max_val >= threshold)
     return max_val >= threshold
 
 
-def main():
+def main(min_dx, slot_food, slot_drink, n_tips, exit_button, throw_power, is_rainbow_line):
     global img_grab
-    coord_rods = detected_rod(n_tips=3)
+
+    coord_rods = detected_rod(n_tips=n_tips, min_dx=min_dx)
 
     while True:
         img_grab = ImageGrab.grab()
 
         for i in range(len(coord_rods)):
-            if is_bite_indicator_on_image(img_grab.crop(coord_rods[i])):
+            if not is_bite_indicator_on_image(img_grab.crop(coord_rods[i])):
                 release_all_button()
                 keyboard.press_and_release(str(i + 1))
                 time.sleep(1)
                 if is_fish_on_hook():
-                    catching_fish()
-                    new_throwing()
+                    catching_fish(is_rainbow_line)
+                    new_throwing(int(throw_power))
+                    print()
                 else:
                     put_the_rod_back()
                 time.sleep(1)
-                coord_rods = detected_rod()
+                coord_rods = detected_rod(n_tips=n_tips, min_dx=min_dx)
                 break
 
         if is_need_to_tea():
-            keyboard.press_and_release('4')
-            time.sleep(0.2)
-            keyboard.press_and_release('4')
+            keyboard.press_and_release(str(slot_drink))
         if is_need_to_eat():
-            keyboard.press_and_release('5')
-            time.sleep(0.2)
-            keyboard.press_and_release('5')
+            keyboard.press_and_release(str(slot_food))
+        if keyboard.is_pressed(exit_button):
+            break
 
 
 if __name__ == '__main__':
-    import threading
-
     time.sleep(2)
-    t = threading.Thread(target=run_bot_thread, daemon=True)
-    t.start()
-
-    try:
-        main()
-    except KeyboardInterrupt:
-        pass
