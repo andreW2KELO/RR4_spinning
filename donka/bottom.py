@@ -18,6 +18,7 @@ import mouse
 import pytesseract
 import win32gui
 from PIL import ImageGrab, Image, ImageOps
+from colorama import init, Fore
 
 from aiogram import Bot, Dispatcher, types, Router
 from aiogram.filters import Command
@@ -29,6 +30,7 @@ pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tessera
 
 template_fish = cv2.imread('fish.png', cv2.IMREAD_COLOR)
 template_reel = cv2.imread('reel.png', cv2.IMREAD_COLOR)
+template_reel2 = cv2.imread('reel2.png', cv2.IMREAD_COLOR)
 
 router = Router()
 
@@ -229,9 +231,12 @@ def trigger_to_elevate_rod_if_have_rainbow_line(threshold=0.9):
     ), cv2.COLOR_RGB2BGR)
 
     result = cv2.matchTemplate(screenshot, template_reel, cv2.TM_CCOEFF_NORMED)
-    _, max_val, _, _ = cv2.minMaxLoc(result)
+    result2 = cv2.matchTemplate(screenshot, template_reel2, cv2.TM_CCOEFF_NORMED)
 
-    return max_val >= threshold
+    _, max_val, _, _ = cv2.minMaxLoc(result)
+    _, max_val2, _, _ = cv2.minMaxLoc(result2)
+
+    return max_val >= threshold or max_val2 >= threshold
 
 
 @timeit
@@ -239,7 +244,7 @@ def new_throwing(percent=57):
     mouse.press(button='left')
     time.sleep(percent / 100 / 0.57)
     mouse.release(button='left')
-    time.sleep((percent / 100) * 1.9 / 0.57)
+    time.sleep(((percent / 100) * 1.9 / 0.57) + 1)
     mouse.press(button='left')
     time.sleep(0.1)
     mouse.release(button='left')
@@ -265,8 +270,6 @@ def is_bite_indicator_on_image(img, threshold=10):
 def catching_fish(is_rainbow_line):
     global img_grab
 
-    is_rainbow_line = is_rainbow_line == 'да'
-
     mouse.press(button='left')
     keyboard.press('shift')
 
@@ -275,8 +278,8 @@ def catching_fish(is_rainbow_line):
         is_ready = is_ready_to_throwing()
         is_button_on_screen = button_v_sadok_on_screen()
 
-        is_trigger_elevate = trigger_to_elevate_rod_if_not_rainbow_line() \
-            if is_rainbow_line else trigger_to_elevate_rod_if_have_rainbow_line()
+        is_trigger_elevate = trigger_to_elevate_rod_if_have_rainbow_line() \
+            if is_rainbow_line == 'да' else trigger_to_elevate_rod_if_not_rainbow_line()
 
         if is_ready:
             break
@@ -292,8 +295,8 @@ def catching_fish(is_rainbow_line):
                 img_grab = ImageGrab.grab()
                 is_ready = is_ready_to_throwing()
                 is_button_on_screen = button_v_sadok_on_screen()
-                is_trigger_elevate = trigger_to_elevate_rod_if_not_rainbow_line() \
-                    if is_rainbow_line else trigger_to_elevate_rod_if_have_rainbow_line()
+                is_trigger_elevate = trigger_to_elevate_rod_if_have_rainbow_line() \
+                    if is_rainbow_line == 'да' else trigger_to_elevate_rod_if_not_rainbow_line()
 
                 if not is_trigger_elevate and not is_button_on_screen and not is_ready:
                     trig = 1
@@ -385,7 +388,8 @@ def is_fish_on_hook(threshold=0.6):  # threshold — точность совпа
 
 def main(min_dx, slot_food, slot_drink, n_tips, exit_button, throw_power, is_rainbow_line):
     global img_grab
-
+    init(autoreset=True)  # чтобы после строки цвет сбрасывался
+    print(Fore.RED + "НАЧАЛО РАБОТЫ")
     coord_rods = detected_rod(n_tips=n_tips, min_dx=min_dx)
 
     while True:
@@ -411,8 +415,9 @@ def main(min_dx, slot_food, slot_drink, n_tips, exit_button, throw_power, is_rai
         if is_need_to_eat():
             keyboard.press_and_release(str(slot_food))
         if keyboard.is_pressed(exit_button):
+            print(Fore.RED + "ПАУЗА")
             break
 
 
 if __name__ == '__main__':
-    time.sleep(2)
+    print('\033[31mКрасный текст\033[0m')
