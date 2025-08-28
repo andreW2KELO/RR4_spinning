@@ -417,7 +417,3 @@ def main(min_dx, slot_food, slot_drink, n_tips, exit_button, throw_power, is_rai
         if keyboard.is_pressed(exit_button):
             print(Fore.RED + "ПАУЗА")
             break
-
-
-if __name__ == '__main__':
-    print('\033[31mКрасный текст\033[0m')
