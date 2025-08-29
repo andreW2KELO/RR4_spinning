@@ -23,9 +23,9 @@ TOKEN = "6330587531:AAGdkhe2x3lYVaNIPtARomCQeIB266Nf_Yg"
 
 pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract'
 
-template_fish = cv2.imread('fish.png', cv2.IMREAD_COLOR)
-template_reel = cv2.imread('reel.png', cv2.IMREAD_COLOR)
-template_reel2 = cv2.imread('reel2.png', cv2.IMREAD_COLOR)
+template_fish = cv2.imread('../sea/fish.png', cv2.IMREAD_COLOR)
+template_reel = cv2.imread('../sea/reel.png', cv2.IMREAD_COLOR)
+template_reel2 = cv2.imread('../sea/reel2.png', cv2.IMREAD_COLOR)
 
 router = Router()
 
@@ -213,11 +213,11 @@ def is_good_fish():
 
 def trigger_to_elevate_rod_if_not_rainbow_line():
     tmp = 0 if win_size[-1] == 1050 else 2
-    img = img_grab.crop((1235, 1011 - tmp, 1236, 1012 - tmp)).load()[0, 0]
+    img = img_grab.crop((1234, 1011 - tmp, 1235, 1012 - tmp)).load()[0, 0]
 
     return img[0] > 170 and img[1] > 170 and img[2] > 170
 
-
+@timeit
 def trigger_to_elevate_rod_if_have_rainbow_line(threshold=0.9):
     tmp = 0 if win_size[-1] == 1050 else 1
 
@@ -318,7 +318,7 @@ def catching_fish(is_rainbow_line):
 
 def main(pause, slot_food, slot_drink, exit_button, is_rainbow_line):
     global img_grab
-    t = round(time.time())
+    t = round(time.time(), 1)
     time_for_eating = round(time.time())
     init(autoreset=True)
     print(Fore.RED + "НАЧАЛО РАБОТЫ")
@@ -333,6 +333,7 @@ def main(pause, slot_food, slot_drink, exit_button, is_rainbow_line):
         img_grab = ImageGrab.grab()
 
         mouse.press(button='left')
+        # keyboard.press('shift')
 
         if is_fish_on_hook():
             release_all_button()
@@ -352,12 +353,14 @@ def main(pause, slot_food, slot_drink, exit_button, is_rainbow_line):
 
         if keyboard.is_pressed(exit_button):
             print(Fore.RED + "ПАУЗА")
+            release_all_button()
             break
 
-        if t + pause <= round(time.time()):
+        if t + float(pause) <= round(time.time(), 1):
             release_all_button()
-            time.sleep(1.5)
-            t = round(time.time())
+            # time.sleep(1.2)
+            time.sleep(1.8)
+            t = round(time.time(), 1)
 
     release_all_button()
 
@@ -365,4 +368,5 @@ def main(pause, slot_food, slot_drink, exit_button, is_rainbow_line):
 if __name__ == '__main__':
     # t = round(time.time())
     # print(t)
-    main(5, '5', '4', '9', 'нет')
+    print(trigger_to_elevate_rod_if_have_rainbow_line())
+    # main(5, '5', '4', '9', 'нет')

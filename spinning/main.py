@@ -58,7 +58,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         super().__init__()
         self.setupUi(self)
 
-        self.pause.setValidator(OptionalIntValidator(1, 100, self))
+        # self.pause.setValidator(OptionalIntValidator(1, 100, self))
         self.slot_food.setValidator(OptionalIntValidator(4, 7, self))
         self.slot_drink.setValidator(OptionalIntValidator(4, 7, self))
         self.is_rainbow_line.setValidator(YesNoValidator(self.is_rainbow_line))

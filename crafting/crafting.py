@@ -34,11 +34,11 @@ def main():
         #     time.sleep(0.1)
         #     keyboard.press_and_release('5')
 
-        if is_need_to_eat():
-            keyboard.press_and_release('5')
-
-        if is_need_to_tea():
-            keyboard.press_and_release('4')
+        # if is_need_to_eat():
+        #     keyboard.press_and_release('5')
+        #
+        # if is_need_to_tea():
+        #     keyboard.press_and_release('4')
 
 
 if __name__ == '__main__':
