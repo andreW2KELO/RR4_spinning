@@ -11,7 +11,6 @@ from difflib import SequenceMatcher
 import keyboard
 import mouse
 import pytesseract
-import win32gui
 from PIL import ImageGrab, Image, ImageOps
 from colorama import init, Fore
 
@@ -19,13 +18,13 @@ from aiogram import Bot, Dispatcher, types, Router
 from aiogram.filters import Command
 from aiogram.types import BufferedInputFile
 
-TOKEN = "6330587531:AAGdkhe2x3lYVaNIPtARomCQeIB266Nf_Yg"
+TOKEN = "some_token"
 
 pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract'
 
-template_fish = cv2.imread('../sea/fish.png', cv2.IMREAD_COLOR)
-template_reel = cv2.imread('../sea/reel.png', cv2.IMREAD_COLOR)
-template_reel2 = cv2.imread('../sea/reel2.png', cv2.IMREAD_COLOR)
+template_fish = cv2.imread('fish.png', cv2.IMREAD_COLOR)
+template_reel = cv2.imread('reel.png', cv2.IMREAD_COLOR)
+template_reel2 = cv2.imread('reel2.png', cv2.IMREAD_COLOR)
 
 router = Router()
 
@@ -34,25 +33,6 @@ trof = 0
 blue = 0
 count = 0
 img_grab = ImageGrab.grab()
-
-
-def get_rf4_client_rect(title_substr="Russian Fishing 4"):
-    hwnd = None
-
-    def enum_handler(h, _):
-        nonlocal hwnd
-        if win32gui.IsWindowVisible(h):
-            if title_substr.lower() in win32gui.GetWindowText(h).lower():
-                hwnd = h
-
-    win32gui.EnumWindows(enum_handler, None)
-    if not hwnd:
-        raise RuntimeError("Окно RF4 не найдено")
-
-    return win32gui.GetClientRect(hwnd)
-
-
-win_size = get_rf4_client_rect()
 
 
 @router.message(Command('start'))
@@ -172,16 +152,17 @@ def is_need_to_tea():
 
 
 def zach_trof_blue_just(arr: np.ndarray):
-    mask_blue = np.all(arr == [72, 169, 255], axis=2)
+    mask_blue = np.all(arr == [89, 175, 251], axis=2)
     if mask_blue.any():
         return "blue"
 
-    r, g, b = arr[..., 0], arr[..., 1], arr[..., 2]
-    mask_trof = (216 <= r) & (r <= 228) & (189 <= g) & (g <= 200) & (47 <= b) & (b <= 79)
+    # r, g, b = arr[..., 0], arr[..., 1], arr[..., 2]
+    # mask_trof = (216 <= r) & (r <= 228) & (189 <= g) & (g <= 200) & (47 <= b) & (b <= 79)
+    mask_trof = np.all(arr == [252, 196, 0], axis=2)
     if mask_trof.any():
         return "trof"
 
-    mask_zach = np.all(arr == [183, 199, 56], axis=2)
+    mask_zach = np.all(arr == [155, 200, 63], axis=2)
     if mask_zach.any():
         return "zach"
 
@@ -192,9 +173,8 @@ def zach_trof_blue_just(arr: np.ndarray):
 def is_good_fish():
     global count, zach, trof, blue
 
-    img = ImageGrab.grab(bbox=(600, 110, 900, 130)).convert("RGB")
+    img = ImageGrab.grab(bbox=(700, 50, 1200, 200)).convert("RGB")
     arr = np.array(img, dtype=np.uint8)
-
     cls = zach_trof_blue_just(arr)
 
     match cls:
@@ -212,18 +192,15 @@ def is_good_fish():
 
 
 def trigger_to_elevate_rod_if_not_rainbow_line():
-    tmp = 0 if win_size[-1] == 1050 else 2
-    img = img_grab.crop((1234, 1011 - tmp, 1235, 1012 - tmp)).load()[0, 0]
+    img = img_grab.crop((1234, 1009, 1235, 1010)).load()[0, 0]
 
     return img[0] > 170 and img[1] > 170 and img[2] > 170
 
+
 @timeit
 def trigger_to_elevate_rod_if_have_rainbow_line(threshold=0.9):
-    tmp = 0 if win_size[-1] == 1050 else 1
-
-    screenshot = cv2.cvtColor(np.array(ImageGrab.grab(
-        bbox=(1157, 1019 - tmp, 1177, 1030 - tmp))
-    ), cv2.COLOR_RGB2BGR)
+    img = ImageGrab.grab(bbox=(1187, 1019 - 1, 1217, 1030 - 1))
+    screenshot = cv2.cvtColor(np.array(img), cv2.COLOR_RGB2BGR)
 
     result = cv2.matchTemplate(screenshot, template_reel, cv2.TM_CCOEFF_NORMED)
     result2 = cv2.matchTemplate(screenshot, template_reel2, cv2.TM_CCOEFF_NORMED)
@@ -313,8 +290,6 @@ def catching_fish(is_rainbow_line):
     mouse.release(button='left')
     keyboard.release('shift')
 
-    time.sleep(1)
-
 
 def main(pause, slot_food, slot_drink, exit_button, is_rainbow_line):
     global img_grab
@@ -338,7 +313,6 @@ def main(pause, slot_food, slot_drink, exit_button, is_rainbow_line):
         if is_fish_on_hook():
             release_all_button()
             catching_fish(is_rainbow_line)
-            new_throwing()
 
         if is_ready_to_throwing():
             release_all_button()
@@ -366,7 +340,4 @@ def main(pause, slot_food, slot_drink, exit_button, is_rainbow_line):
 
 
 if __name__ == '__main__':
-    # t = round(time.time())
-    # print(t)
-    print(trigger_to_elevate_rod_if_have_rainbow_line())
-    # main(5, '5', '4', '9', 'нет')
+    main(5, '5', '4', '9', 'да')

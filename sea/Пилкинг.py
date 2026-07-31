@@ -3,7 +3,7 @@
 import time
 from PIL import ImageGrab
 import pyautogui
-
+import keyboard
 
 def fish_on_hook():
     img = ImageGrab.grab().crop((545, 1022, 550, 1027))
@@ -23,13 +23,15 @@ def pick_up():
 
 def func_for_sea():
     while True:
+        if keyboard.is_pressed('9'):
+            break
         if fish_on_hook():
-            pick_up()
+            # pick_up()
             break
         pyautogui.mouseDown(button='right')
-        time.sleep(0.4)
+        time.sleep(0.2)
         pyautogui.mouseUp(button='right')
-        time.sleep(1.5)
+        time.sleep(1.2)
 
 
 if __name__ == '__main__':

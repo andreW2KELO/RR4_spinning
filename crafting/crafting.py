@@ -25,7 +25,7 @@ def main():
             break
         # mouse.move(900, 950, duration=0.1)
         mouse.click(button='left')
-        time.sleep(0.1)
+        time.sleep(0.05)
         # if is_ready_to_scoop():
         #     mouse.click(button='left')
         #     time.sleep(2.1)

@@ -2,7 +2,7 @@ from PyQt5.QtWidgets import QMainWindow, QApplication
 from PyQt5.QtGui import QValidator
 from interface import Ui_MainWindow
 import sys
-from spinning import main, run_bot_thread
+from NewOOPSpinning import main
 import threading
 import time
 
@@ -78,7 +78,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.play.setEnabled(all_ok)
 
     def run(self):
-        time.sleep(2)
 
         pause = self.pause.text() if self.pause.text() else 5
         slot_food = self.slot_food.text() if self.slot_food.text() else '5'
@@ -90,8 +89,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
 
 if __name__ == '__main__':
-    t = threading.Thread(target=run_bot_thread, daemon=True)
-    t.start()
+    # t = threading.Thread(target=run_bot_thread, daemon=True)
+    # t.start()
 
     app = QApplication(sys.argv)
     window = MainWindow()
