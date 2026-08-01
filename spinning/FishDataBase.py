@@ -44,6 +44,43 @@ def record_catch(fish_class: str):
         )
 
 
+def get_statistics_by_day(day: datetime) -> dict:
+    with sqlite3.connect(DATABASE_PATH) as connection:
+        # prepared_day = datetime.strptime(day, "%d.%m.%Y")
+        today = connection.execute(
+            """
+            SELECT COUNT(*)
+            FROM catches
+            WHERE DATE(caught_at) = DATE(?, 'localtime')
+            """,
+                (
+                    day,
+                ),
+        ).fetchone()[0]
+
+        classes = dict(
+            connection.execute(
+                """
+                SELECT fish_class, COUNT(*)
+                FROM catches
+                WHERE DATE(caught_at) = DATE(?, 'localtime')
+                GROUP BY fish_class
+                """,
+                (
+                    day,
+                ),
+            ).fetchall()
+        )
+
+    return {
+        "today": today,
+        "normal": classes.get("normal", 0),
+        "zach": classes.get("zach", 0),
+        "trof": classes.get("trof", 0),
+        "blue": classes.get("blue", 0),
+    }
+
+
 def get_statistics() -> dict:
     with sqlite3.connect(DATABASE_PATH) as connection:
         total = connection.execute(
@@ -63,6 +100,7 @@ def get_statistics() -> dict:
                 """
                 SELECT fish_class, COUNT(*)
                 FROM catches
+                WHERE DATE(caught_at) = DATE('now', 'localtime')
                 GROUP BY fish_class
                 """
             ).fetchall()

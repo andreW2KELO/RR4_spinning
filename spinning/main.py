@@ -2,9 +2,19 @@ from PyQt5.QtWidgets import QMainWindow, QApplication
 from PyQt5.QtGui import QValidator
 from interface import Ui_MainWindow
 import sys
-from NewOOPSpinning import main
-import threading
-import time
+from NewOOPSpinning import main_app, BotConfig
+import multiprocessing as mp
+import asyncio
+
+
+def convert_into_boolean(st: str):
+    if st.lower() in ["true", "да", "yes"]:
+        return True
+    return False
+
+
+def run_bot_process(config: BotConfig):
+    asyncio.run(main_app(config=config))
 
 
 class YesNoValidator(QValidator):
@@ -20,34 +30,10 @@ class YesNoValidator(QValidator):
         if text == "":
             return QValidator.Intermediate, s, pos
 
-        valid_words = ["да", "нет"] if not self.case_sensitive else ["да", "нет"]
+        valid_words = ["да", "нет", 'no', 'yes', 'false', 'true'] if not self.case_sensitive else ["да", "нет"]
         if text in valid_words:
             return QValidator.Acceptable, s, pos
         if any(w.startswith(text) for w in valid_words):
-            return QValidator.Intermediate, s, pos
-
-        return QValidator.Invalid, s, pos
-
-
-class OptionalIntValidator(QValidator):
-    def __init__(self, minimum, maximum, parent=None):
-        super().__init__(parent)
-        self.min = minimum
-        self.max = maximum
-
-    def validate(self, s: str, pos: int):
-        if s.strip() == "":
-            # Пустая строка допустима
-            return QValidator.Acceptable, s, pos
-
-        if not s.isdigit():
-            return QValidator.Invalid, s, pos
-
-        val = int(s)
-        if self.min <= val <= self.max:
-            return QValidator.Acceptable, s, pos
-
-        if val < self.min and len(s) < len(str(self.max)):
             return QValidator.Intermediate, s, pos
 
         return QValidator.Invalid, s, pos
@@ -58,15 +44,12 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         super().__init__()
         self.setupUi(self)
 
-        # self.pause.setValidator(OptionalIntValidator(1, 100, self))
-        self.slot_food.setValidator(OptionalIntValidator(4, 7, self))
-        self.slot_drink.setValidator(OptionalIntValidator(4, 7, self))
         self.is_rainbow_line.setValidator(YesNoValidator(self.is_rainbow_line))
 
+        self.bot_process = None
         self.play.clicked.connect(self.run)
 
     def update_state(self):
-        # hasAcceptableInput учитывает validator и inputMask
         fields = (self.n_tips, self.throw_power)
         all_ok = all(le.hasAcceptableInput() for le in fields)
 
@@ -78,21 +61,46 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.play.setEnabled(all_ok)
 
     def run(self):
+        if self.bot_process and self.bot_process.is_alive():
+            return
 
-        pause = self.pause.text() if self.pause.text() else 5
-        slot_food = self.slot_food.text() if self.slot_food.text() else '5'
-        slot_drink = self.slot_drink.text() if self.slot_drink.text() else '4'
-        exit_button = self.exit_button.text() if self.exit_button.text() else '9'
-        is_rainbow_line = self.is_rainbow_line.text() if self.is_rainbow_line.text() else 'нет'
+        config = BotConfig(
+            retrieve_pause_interval=float(
+                self.pause.text() or 5
+            ),
+            slot_food=self.slot_food.text() or "5",
+            slot_drink=self.slot_drink.text() or "4",
+            exit_button=self.exit_button.text() or "9",
+            is_rainbow_line=convert_into_boolean(
+                self.is_rainbow_line.text() or "нет"
+            ),
+        )
+        self.bot_process = mp.Process(
+            target=run_bot_process,
+            args=(config,),
+        )
 
-        main(pause, slot_food, slot_drink, exit_button, is_rainbow_line)
+        self.bot_process.start()
+        self.play.setEnabled(False)
+
+    def stop_bot(self):
+        if self.bot_process and self.bot_process.is_alive():
+            self.bot_process.terminate()
+            self.bot_process.join(timeout=3)
+
+        self.bot_process = None
+        self.play.setEnabled(True)
+
+    def closeEvent(self, event):
+        self.stop_bot()
+        event.accept()
 
 
 if __name__ == '__main__':
-    # t = threading.Thread(target=run_bot_thread, daemon=True)
-    # t.start()
+    mp.freeze_support()
 
     app = QApplication(sys.argv)
     window = MainWindow()
     window.show()
+
     sys.exit(app.exec_())

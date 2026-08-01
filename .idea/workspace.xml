@@ -4,20 +4,23 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="02ce320e-08e7-4fc9-9bc2-de2fc5b12b5c" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/spinning/bot.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/.gitignore" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/RussianFishingBot.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/RussianFishingBot.iml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/discord.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/inspectionProfiles/Project_Default.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/inspectionProfiles/Project_Default.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/inspectionProfiles/profiles_settings.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/inspectionProfiles/profiles_settings.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/vcs.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crafting/crafting.py" beforeDir="false" afterPath="$PROJECT_DIR$/crafting/crafting.py" afterDir="false" />
+    <list default="true" id="02ce320e-08e7-4fc9-9bc2-de2fc5b12b5c" name="Changes" comment="feat: rewrite bot with OOP">
+      <change afterPath="$PROJECT_DIR$/spinning/telegramBot.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/requirements.txt" beforeDir="false" afterPath="$PROJECT_DIR$/requirements.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/sea/Пилкинг.py" beforeDir="false" afterPath="$PROJECT_DIR$/sea/Пилкинг.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/spinning/FishDataBase.py" beforeDir="false" afterPath="$PROJECT_DIR$/spinning/FishDataBase.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/spinning/NewOOPSpinning.py" beforeDir="false" afterPath="$PROJECT_DIR$/spinning/NewOOPSpinning.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/spinning/analytics.db" beforeDir="false" afterPath="$PROJECT_DIR$/spinning/analytics.db" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/spinning/bot.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/spinning/fish.png" beforeDir="false" afterPath="$PROJECT_DIR$/spinning/template/fish.png" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/spinning/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/spinning/main.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/spinning/spinning.py" beforeDir="false" afterPath="$PROJECT_DIR$/spinning/spinning.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/spinning/otpustit.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/spinning/ready_to_cast.png" beforeDir="false" afterPath="$PROJECT_DIR$/spinning/template/ready_to_cast.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/spinning/ready_to_cast_night.png" beforeDir="false" afterPath="$PROJECT_DIR$/spinning/template/ready_to_cast_night.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/spinning/reel.png" beforeDir="false" afterPath="$PROJECT_DIR$/spinning/template/reel.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/spinning/reel2.png" beforeDir="false" afterPath="$PROJECT_DIR$/spinning/template/reel2.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/spinning/spinning.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/spinning/v_sadok.png" beforeDir="false" afterPath="$PROJECT_DIR$/spinning/template/v_sadok.png" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -66,6 +69,7 @@
     "Python.main.executor": "Run",
     "Python.pilking.executor": "Run",
     "Python.spinning.executor": "Debug",
+    "Python.telegramBot.executor": "Run",
     "Python.Пилкинг.executor": "Run",
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
@@ -86,34 +90,12 @@
       <recent name="C:\Users\79968\PycharmProjects\RussianFishingBot\spinning" />
     </key>
     <key name="MoveFile.RECENT_KEYS">
+      <recent name="C:\Users\79968\PycharmProjects\RussianFishingBot\spinning\template" />
       <recent name="C:\Users\79968\PycharmProjects\RussianFishingBot\spinning" />
       <recent name="C:\Users\79968\PycharmProjects\RussianFishingBot" />
     </key>
   </component>
   <component name="RunManager" selected="Python.NewOOPSpinning">
-    <configuration name="Пилкинг" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
-      <module name="RussianFishingBot" />
-      <option name="ENV_FILES" value="" />
-      <option name="INTERPRETER_OPTIONS" value="" />
-      <option name="PARENT_ENVS" value="true" />
-      <envs>
-        <env name="PYTHONUNBUFFERED" value="1" />
-      </envs>
-      <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/sea" />
-      <option name="IS_MODULE_SDK" value="true" />
-      <option name="ADD_CONTENT_ROOTS" value="true" />
-      <option name="ADD_SOURCE_ROOTS" value="true" />
-      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/sea/Пилкинг.py" />
-      <option name="PARAMETERS" value="" />
-      <option name="SHOW_COMMAND_LINE" value="false" />
-      <option name="EMULATE_TERMINAL" value="false" />
-      <option name="MODULE_MODE" value="false" />
-      <option name="REDIRECT_INPUT" value="false" />
-      <option name="INPUT_FILE" value="" />
-      <method v="2" />
-    </configuration>
     <configuration name="FishDataBase" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="RussianFishingBot" />
       <option name="ENV_FILES" value="" />
@@ -206,13 +188,36 @@
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
+    <configuration name="telegramBot" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="RussianFishingBot" />
+      <option name="ENV_FILES" value="" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/spinning" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/spinning/telegramBot.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
     <recent_temporary>
       <list>
         <item itemvalue="Python.NewOOPSpinning" />
+        <item itemvalue="Python.telegramBot" />
         <item itemvalue="Python.FishDataBase" />
-        <item itemvalue="Python.spinning" />
         <item itemvalue="Python.main" />
-        <item itemvalue="Python.Пилкинг" />
+        <item itemvalue="Python.spinning" />
       </list>
     </recent_temporary>
   </component>
@@ -241,18 +246,32 @@
       <workItem from="1785149529612" duration="2918000" />
       <workItem from="1785397087495" duration="20821000" />
       <workItem from="1785433309614" duration="2493000" />
-      <workItem from="1785445255913" duration="14992000" />
+      <workItem from="1785445255913" duration="26791000" />
     </task>
+    <task id="LOCAL-00001" summary="feat: rewrite bot with OOP">
+      <option name="closed" value="true" />
+      <created>1785525102835</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1785525102835</updated>
+    </task>
+    <option name="localTasksCounter" value="2" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
     <option name="version" value="3" />
   </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="feat: rewrite bot with OOP" />
+    <option name="LAST_COMMIT_MESSAGE" value="feat: rewrite bot with OOP" />
+  </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
-    <SUITE FILE_PATH="coverage/RussianFishingBot$FishDataBase.coverage" NAME="FishDataBase Coverage Results" MODIFIED="1785501775831" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/spinning" />
+    <SUITE FILE_PATH="coverage/RussianFishingBot$FishDataBase.coverage" NAME="FishDataBase Coverage Results" MODIFIED="1785588031450" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/spinning" />
     <SUITE FILE_PATH="coverage/RussianFishingBot$pilking.coverage" NAME="pilking Coverage Results" MODIFIED="1780155937689" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/sea" />
-    <SUITE FILE_PATH="coverage/RussianFishingBot$main.coverage" NAME="main Coverage Results" MODIFIED="1785152305547" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/spinning" />
-    <SUITE FILE_PATH="coverage/RussianFishingBot$NewOOPSpinning.coverage" NAME="NewOOPSpinning Coverage Results" MODIFIED="1785524849870" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/spinning" />
+    <SUITE FILE_PATH="coverage/RussianFishingBot$main.coverage" NAME="main Coverage Results" MODIFIED="1785581545794" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/spinning" />
+    <SUITE FILE_PATH="coverage/RussianFishingBot$telegramBot.coverage" NAME="telegramBot Coverage Results" MODIFIED="1785589370179" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/spinning" />
+    <SUITE FILE_PATH="coverage/RussianFishingBot$NewOOPSpinning.coverage" NAME="NewOOPSpinning Coverage Results" MODIFIED="1785589911780" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/spinning" />
     <SUITE FILE_PATH="coverage/RussianFishingBot$spinning.coverage" NAME="spinning Coverage Results" MODIFIED="1785401863901" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/spinning" />
     <SUITE FILE_PATH="coverage/RussianFishingBot$.coverage" NAME="Пилкинг Coverage Results" MODIFIED="1780225829854" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/sea" />
   </component>

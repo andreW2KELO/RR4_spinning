@@ -1,15 +1,12 @@
+# Бот для ловли рыбы в RussianFishing4 на спиннинг
+
 from dataclasses import dataclass
 from enum import Enum, auto
-from pathlib import Path
 import win32gui
-# Бот для ловли рыбы в RussianFishing4 на спиннинг
 import cv2
 import numpy as np
-import time
-import asyncio
 from concurrent.futures import ThreadPoolExecutor
 from functools import wraps
-from io import BytesIO
 from difflib import SequenceMatcher
 from pytesseract import Output
 import multiprocessing as mp
@@ -19,24 +16,16 @@ import keyboard
 import mouse
 import pytesseract
 from PIL import ImageGrab, Image, ImageOps
-from colorama import init, Fore
+from colorama import Fore
 import os
 from dotenv import load_dotenv
-from aiogram import Bot, Dispatcher, types, Router
-from aiogram.filters import Command
-from aiogram.types import BufferedInputFile
 import asyncio
-from contextlib import suppress
 import FishDataBase
-from aiogram import Bot, Dispatcher
 
 load_dotenv()
 
-
 TOKEN = os.getenv('TELEGRAM_BOT_TOKEN')
-AUTHORIZED_USER_IDS = {
-    1923926414,
-}
+
 if not TOKEN:
     raise RuntimeError(
         "Не задан TELEGRAM_BOT_TOKEN"
@@ -46,22 +35,13 @@ READY_BOX = (530, 1020, 730, 1040)
 STEP_DURATION = 0.18
 STEP_PAUSE = 0.05
 DIRECTION_KEYS = {
-    "forward": "w",
-    "back": "s",
-    "left": "a",
-    "right": "d",
-
-    "вперед": "w",
-    "назад": "s",
-    "влево": "a",
-    "вправо": "d",
+    "forward": "w", "back": "s", "left": "a", "right": "d",
+    "вперед": "w", "назад": "s", "влево": "a", "вправо": "d",
 }
 GAME_WINDOW_TITLES = {
     "Russian Fishing 4",
     "Русская Рыбалка 4",
 }
-
-router = Router()
 
 
 def is_game_active() -> bool:
@@ -88,41 +68,17 @@ def prepare_text_image(image: Image.Image | np.ndarray):
 
 pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract'
 
-template_fish = cv2.imread('fish.png', cv2.IMREAD_COLOR)
-template_reel = cv2.imread('reel.png', cv2.IMREAD_COLOR)
-template_reel2 = cv2.imread('reel2.png', cv2.IMREAD_COLOR)
-template_v_sadok = cv2.imread('v_sadok.png', cv2.IMREAD_COLOR)
-template_otpustit = cv2.imread('otpustit.png', cv2.IMREAD_COLOR)
-ready_template_original = cv2.imread("ready_to_cast.png", cv2.IMREAD_GRAYSCALE)
-ready_template_original_night = cv2.imread("ready_to_cast_night.png", cv2.IMREAD_GRAYSCALE)
+template_fish = cv2.imread('template/fish.png', cv2.IMREAD_COLOR)
+template_reel = cv2.imread('template/reel.png', cv2.IMREAD_COLOR)
+template_reel2 = cv2.imread('template/reel2.png', cv2.IMREAD_COLOR)
+template_v_sadok = cv2.imread('template/v_sadok.png', cv2.IMREAD_COLOR)
+ready_template_original = cv2.imread("template/ready_to_cast.png", cv2.IMREAD_GRAYSCALE)
+ready_template_original_night = cv2.imread("template/ready_to_cast_night.png", cv2.IMREAD_GRAYSCALE)
 
 ready_template_prepared = prepare_text_image(ready_template_original)
 ready_template_prepared_night = prepare_text_image(ready_template_original_night)
 
-router = Router()
-
-zach = 0
-trof = 0
-blue = 0
-count = 0
 img_grab = ImageGrab.grab()
-
-
-def is_ready_to_throwing():
-    image = img_grab.crop((530, 1020, 730, 1040))
-    return searching_coincidence(recognize_the_text(image), 'снасть готова к забросу')
-
-
-def similarity(str1: str, str2: str) -> float:
-    ratio = SequenceMatcher(None, str1, str2).ratio()
-    return round(ratio * 100, 2)
-
-
-def searching_coincidence(text_lst: list, pat='движение в придонном слое.'):
-    for st in text_lst:
-        if similarity(st, pat) > 50:
-            return True
-    return False
 
 
 def normalize_text(text: str) -> str:
@@ -206,25 +162,6 @@ def find_text_on_screen(frame: Image.Image, target: str, min_confidence: float =
             item["confidence"],
         ),
     )
-
-
-def recognize_the_text(image):
-    """ Распознает текст с помощью pytesseract """
-    image_resized = image.resize((image.width * 3, image.height * 3), Image.LANCZOS)
-    gray = image_resized.convert('L')
-    inverted = ImageOps.invert(gray)
-    bw = inverted.point(lambda x: 0 if x < 150 else 255, "L")
-
-    variants = [gray, inverted, bw]
-
-    with ThreadPoolExecutor() as executor:
-        results = list(executor.map(
-            lambda img: pytesseract.image_to_string(
-                img, lang="rus", config="--oem 3 --psm 7"
-            ), variants)
-        )
-
-    return [i.strip().lower() for i in results]
 
 
 def timeit(func):
@@ -325,8 +262,6 @@ def is_button_v_sadok_on_screen(threshold=0.9):
 
 
 def is_good_fish():
-    global count, zach, trof, blue
-
     img = ImageGrab.grab(bbox=(700, 50, 1200, 200)).convert("RGB")
     arr = np.array(img, dtype=np.uint8)
     cls = zach_trof_blue_just(arr)
@@ -647,7 +582,7 @@ class FishingBot:
         self.state_started_at = time.monotonic()
         self.reset_detectors()
 
-        print(f"{old_state.name} -> {new_state.name}")
+        print(Fore.GREEN + f"{old_state.name} -> {new_state.name}")
 
         self.on_enter(new_state)
 
@@ -1100,6 +1035,7 @@ class FishingBot:
             self.transition(BotState.PAUSE)
             return False
 
+        # noinspection PyUnreachableCode
         if self.state is BotState.IDLE:
             self.handle_idle(now)
 
@@ -1124,43 +1060,30 @@ class FishingBot:
         return True
 
     def run(self):
-        print("НАЧАЛО РАБОТЫ")
+        print(Fore.RED + "НАЧАЛО РАБОТЫ")
 
         try:
             while self.tick():
                 time.sleep(self.config.tick_delay)
         finally:
             self.input.force_reset()
-            print("БОТ ОСТАНОВЛЕН")
-
-
-def main(pause, slot_food, slot_drink, exit_button, is_rainbow_line):
-    config = BotConfig(
-        retrieve_pause_interval=float(pause),
-        slot_food=str(slot_food),
-        slot_drink=str(slot_drink),
-        exit_button=str(exit_button),
-        is_rainbow_line=(
-                str(is_rainbow_line).strip().lower() == "да"
-        ),
-    )
-
-    bot = FishingBot(config)
-    bot.run()
+            print(Fore.RED + "БОТ ОСТАНОВЛЕН")
 
 
 def fishing_worker_main(
         command_queue: mp.Queue,
         event_queue: mp.Queue,
         heartbeat: mp.Value,
+        config: BotConfig,
 ):
-    config = BotConfig(
-        retrieve_pause_interval=5,
-        slot_food="5",
-        slot_drink="4",
-        exit_button="9",
-        is_rainbow_line=True,
-    )
+    if not config:
+        config = BotConfig(
+            retrieve_pause_interval=5,
+            slot_food="5",
+            slot_drink="4",
+            exit_button="9",
+            is_rainbow_line=True,
+        )
 
     bot = FishingBot(
         config=config,
@@ -1173,18 +1096,16 @@ def fishing_worker_main(
 
 
 class FishingSupervisor:
-    def __init__(self):
+    def __init__(self, config: BotConfig):
         self.command_queue = mp.Queue()
         self.event_queue = mp.Queue()
         self.heartbeat = mp.Value("d", time.time())
+        self.config = config
 
         self.worker_process = None
 
     def start_worker(self):
-        if (
-                self.worker_process is not None
-                and self.worker_process.is_alive()
-        ):
+        if self.worker_process is not None and self.worker_process.is_alive():
             return
 
         with self.heartbeat.get_lock():
@@ -1196,6 +1117,7 @@ class FishingSupervisor:
                 self.command_queue,
                 self.event_queue,
                 self.heartbeat,
+                self.config
             ),
             daemon=True,
         )
@@ -1228,162 +1150,18 @@ class FishingSupervisor:
     def restart_worker(self):
         self.stop_worker()
 
-        # Создаём свежую очередь, чтобы старые команды
-        # не выполнялись после перезапуска.
         self.command_queue = mp.Queue()
 
         self.start_worker()
 
 
-async def check_access(message: types.Message) -> bool:
-    if message.from_user.id not in AUTHORIZED_USER_IDS:
-        await message.answer(f"Доступ запрещён ваш id {message.from_user.id}")
-        return False
+async def main_app(config: BotConfig = None):
+    import telegramBot
 
-    return True
-
-
-@router.message(Command('start'))
-async def cmd_start(message: types.Message):
-    stats = await asyncio.to_thread(
-        FishDataBase.get_statistics
-    )
-    await message.answer(f"Сегодня: {stats['today']}\n"
-                         f"Всего: {stats['total']}\n"
-                         f"Зачётных: {stats['zach']}\n"
-                         f"Трофейных: {stats['trof']}\n"
-                         f"Редких трофеев: {stats['blue']}")
-
-
-@router.message(Command("screen"))
-async def screen(message: types.Message):
-    screenshot = ImageGrab.grab()
-
-    buffer = BytesIO()
-    screenshot.save(buffer, format="JPEG", quality=85)
-
-    photo = BufferedInputFile(
-        buffer.getvalue(),
-        filename="screen.jpg",
-    )
-
-    await message.answer_photo(photo)
-
-
-@router.message(Command("click"))
-async def click_command(message: types.Message, supervisor: FishingSupervisor):
-    if not await check_access(message):
-        return
-
-    parts = message.text.split()
-
-    if len(parts) not in {3, 4}:
-        await message.answer(
-            "Формат: /click X Y [left|right]"
-        )
-        return
-
-    try:
-        x = int(parts[1])
-        y = int(parts[2])
-    except ValueError:
-        await message.answer("X и Y должны быть числами")
-        return
-
-    button = parts[3].lower() if len(parts) == 4 else "left"
-
-    supervisor.command_queue.put({
-        "type": "click",
-        "x": x,
-        "y": y,
-        "button": button,
-    })
-
-    await message.answer(
-        f"Команда поставлена в очередь: {button} ({x}, {y})"
-    )
-
-
-@router.message(Command("move"))
-async def move_command(message: types.Message, supervisor: FishingSupervisor):
-    if not await check_access(message):
-        return
-
-    parts = message.text.split()
-
-    if len(parts) != 3:
-        await message.answer(
-            "Формат: /move forward 5"
-        )
-        return
-
-    direction = parts[1].lower()
-
-    try:
-        steps = int(parts[2])
-    except ValueError:
-        await message.answer("Количество шагов должно быть числом")
-        return
-
-    supervisor.command_queue.put({
-        "type": "move",
-        "direction": direction,
-        "steps": steps,
-    })
-
-    await message.answer("Команда движения отправлена")
-
-
-@router.message(Command("click_text"))
-async def click_text_command(message: types.Message, supervisor: FishingSupervisor):
-    if not await check_access(message):
-        return
-
-    parts = message.text.split(
-        maxsplit=1,
-    )
-
-    if len(parts) != 2:
-        await message.answer(
-            "Формат: /click_text ПРОДАТЬ"
-        )
-        return
-
-    supervisor.command_queue.put({
-        "type": "click_text",
-        "text": parts[1],
-    })
-
-    await message.answer(
-        f'Ищу и нажимаю: "{parts[1]}"'
-    )
-
-
-@router.message(Command("restart"))
-async def restart_command(message: types.Message, supervisor: FishingSupervisor):
-    if not await check_access(message):
-        return
-
-    await message.answer("Перезапускаю рыболовного бота")
-
-    await asyncio.to_thread(
-        supervisor.restart_worker
-    )
-
-    await message.answer("Рыболовный бот перезапущен")
-
-
-async def main_app():
     FishDataBase.initialize_database()
 
-    supervisor = FishingSupervisor()
-
-    bot = Bot(TOKEN)
-    dispatcher = Dispatcher()
-
-    dispatcher.include_router(router)
-    dispatcher["supervisor"] = supervisor
-
+    supervisor = FishingSupervisor(config=config)
+    bot, dispatcher = telegramBot.run_telegram_bot(supervisor)
     supervisor.start_worker()
 
     # Проверяем и удаляем старый webhook
@@ -1392,7 +1170,7 @@ async def main_app():
         await bot.delete_webhook(drop_pending_updates=True)
 
     try:
-        print("Telegram-бот запущен")
+        print(Fore.RED + "Telegram-бот запущен")
 
         await dispatcher.start_polling(
             bot,
@@ -1410,8 +1188,6 @@ async def main_app():
         await bot.session.close()
 
 
-# if __name__ == '__main__':
-#     main(5, '5', '4', '9', 'да')
 if __name__ == "__main__":
     mp.freeze_support()
-    asyncio.run(main_app())
+    asyncio.run(main_app(config=None))
