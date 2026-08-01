@@ -42,16 +42,14 @@ GAME_WINDOW_TITLES = {
     "Russian Fishing 4",
     "Русская Рыбалка 4",
 }
+pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract'
 
-
-def is_game_active() -> bool:
-    window = win32gui.GetForegroundWindow()
-    title = win32gui.GetWindowText(window).strip()
-
-    return any(
-        expected.lower() in title.lower()
-        for expected in GAME_WINDOW_TITLES
-    )
+template_fish = cv2.imread('template/fish.png', cv2.IMREAD_COLOR)
+template_reel = cv2.imread('template/reel.png', cv2.IMREAD_COLOR)
+template_reel2 = cv2.imread('template/reel2.png', cv2.IMREAD_COLOR)
+template_v_sadok = cv2.imread('template/v_sadok.png', cv2.IMREAD_COLOR)
+ready_template_original = cv2.imread("template/ready_to_cast.png", cv2.IMREAD_GRAYSCALE)
+ready_template_original_night = cv2.imread("template/ready_to_cast_night.png", cv2.IMREAD_GRAYSCALE)
 
 
 def prepare_text_image(image: Image.Image | np.ndarray):
@@ -66,19 +64,20 @@ def prepare_text_image(image: Image.Image | np.ndarray):
     return binary
 
 
-pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract'
-
-template_fish = cv2.imread('template/fish.png', cv2.IMREAD_COLOR)
-template_reel = cv2.imread('template/reel.png', cv2.IMREAD_COLOR)
-template_reel2 = cv2.imread('template/reel2.png', cv2.IMREAD_COLOR)
-template_v_sadok = cv2.imread('template/v_sadok.png', cv2.IMREAD_COLOR)
-ready_template_original = cv2.imread("template/ready_to_cast.png", cv2.IMREAD_GRAYSCALE)
-ready_template_original_night = cv2.imread("template/ready_to_cast_night.png", cv2.IMREAD_GRAYSCALE)
-
 ready_template_prepared = prepare_text_image(ready_template_original)
 ready_template_prepared_night = prepare_text_image(ready_template_original_night)
 
 img_grab = ImageGrab.grab()
+
+
+def is_game_active() -> bool:
+    window = win32gui.GetForegroundWindow()
+    title = win32gui.GetWindowText(window).strip()
+
+    return any(
+        expected.lower() in title.lower()
+        for expected in GAME_WINDOW_TITLES
+    )
 
 
 def normalize_text(text: str) -> str:
@@ -512,11 +511,12 @@ class InputController:
 
 
 class FishingBot:
-    def __init__(self, config: BotConfig, command_queue=None, event_queue=None, heartbeat=None):
+    def __init__(self, config: BotConfig, command_queue=None, event_queue=None, heartbeat=None, stop_event=None):
         self.config = config
         self.command_queue = command_queue
         self.event_queue = event_queue
         self.heartbeat = heartbeat
+        self.stop_event = stop_event
 
         self.input = InputController()
 
@@ -1027,13 +1027,18 @@ class FishingBot:
 
         self.process_remote_commands()
 
+        if keyboard.is_pressed(self.config.exit_button):
+            print("Получена команда остановки")
+
+            self.input.force_reset()
+
+            if self.stop_event is not None:
+                self.stop_event.set()
+
+            return False
+
         if now >= self.next_food_at:
             self.food_due = True
-
-        if keyboard.is_pressed(self.config.exit_button):
-            self.manual_stop = True
-            self.transition(BotState.PAUSE)
-            return False
 
         # noinspection PyUnreachableCode
         if self.state is BotState.IDLE:
@@ -1071,9 +1076,10 @@ class FishingBot:
 
 
 def fishing_worker_main(
-        command_queue: mp.Queue,
-        event_queue: mp.Queue,
-        heartbeat: mp.Value,
+        command_queue,
+        event_queue,
+        heartbeat,
+        stop_event,
         config: BotConfig,
 ):
     if not config:
@@ -1090,17 +1096,20 @@ def fishing_worker_main(
         command_queue=command_queue,
         event_queue=event_queue,
         heartbeat=heartbeat,
+        stop_event=stop_event,
     )
 
     bot.run()
 
 
 class FishingSupervisor:
-    def __init__(self, config: BotConfig):
+    def __init__(self, config: BotConfig, stop_event):
+        self.config = config
+        self.stop_event = stop_event
+
         self.command_queue = mp.Queue()
         self.event_queue = mp.Queue()
         self.heartbeat = mp.Value("d", time.time())
-        self.config = config
 
         self.worker_process = None
 
@@ -1117,9 +1126,11 @@ class FishingSupervisor:
                 self.command_queue,
                 self.event_queue,
                 self.heartbeat,
+                self.stop_event,
                 self.config
             ),
             daemon=True,
+            name="FishingWorker",
         )
 
         self.worker_process.start()
@@ -1155,12 +1166,17 @@ class FishingSupervisor:
         self.start_worker()
 
 
-async def main_app(config: BotConfig = None):
+async def wait_for_stop_event(stop_event):
+    while not stop_event.is_set():
+        await asyncio.sleep(0.2)
+
+
+async def main_app(config: BotConfig = None, stop_event=None):
     import telegramBot
 
     FishDataBase.initialize_database()
 
-    supervisor = FishingSupervisor(config=config)
+    supervisor = FishingSupervisor(config=config, stop_event=stop_event)
     bot, dispatcher = telegramBot.run_telegram_bot(supervisor)
     supervisor.start_worker()
 
@@ -1169,17 +1185,53 @@ async def main_app(config: BotConfig = None):
     if webhook_info.url:
         await bot.delete_webhook(drop_pending_updates=True)
 
-    try:
-        print(Fore.RED + "Telegram-бот запущен")
+    await bot.delete_webhook(
+        drop_pending_updates=True,
+    )
 
-        await dispatcher.start_polling(
+    supervisor.start_worker()
+
+    polling_task = asyncio.create_task(
+        dispatcher.start_polling(
             bot,
             handle_signals=False,
-            allowed_updates=dispatcher.resolve_used_update_types(),
+            allowed_updates=(
+                dispatcher.resolve_used_update_types()
+            ),
+        )
+    )
+
+    stop_task = asyncio.create_task(
+        wait_for_stop_event(stop_event)
+    )
+
+    try:
+        done, pending = await asyncio.wait(
+            {
+                polling_task,
+                stop_task,
+            },
+            return_when=asyncio.FIRST_COMPLETED,
+        )
+
+        for task in pending:
+            task.cancel()
+
+        await asyncio.gather(
+            *pending,
+            return_exceptions=True,
         )
 
     finally:
-        print("Останавливаю приложение")
+        print("Останавливаю всё приложение")
+
+        if not polling_task.done():
+            polling_task.cancel()
+
+        await asyncio.gather(
+            polling_task,
+            return_exceptions=True,
+        )
 
         await asyncio.to_thread(
             supervisor.stop_worker

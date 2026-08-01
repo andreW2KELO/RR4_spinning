@@ -87,6 +87,9 @@ async def cmd_start(message: types.Message):
 
         "🖥 Управление:\n"
         "/screen — сделать скриншот экрана\n"
+        "/pause — поставить бота на паузу\n"
+        "/resume — возобновить работу бота\n"
+        "/shutdown — выключить рыболовного бота\n"
         "/restart — перезапустить рыболовного бота\n\n"
 
         "🖱 Мышь:\n"
@@ -231,6 +234,42 @@ async def restart_command(message: types.Message, supervisor: FishingSupervisor)
     )
 
     await message.answer("Рыболовный бот перезапущен")
+
+
+@router.message(Command("pause"))
+async def restart_command(message: types.Message, supervisor: FishingSupervisor):
+    if not await check_access(message):
+        return
+
+    supervisor.command_queue.put({
+        "type": "pause",
+    })
+
+    await message.answer("Рыболовный бот остановлен")
+
+
+@router.message(Command("resume"))
+async def restart_command(message: types.Message, supervisor: FishingSupervisor):
+    if not await check_access(message):
+        return
+
+    supervisor.command_queue.put({
+        "type": "resume",
+    })
+
+    await message.answer("Рыболовный бот возобновил работу")
+
+
+@router.message(Command("shutdown"))
+async def restart_command(message: types.Message, supervisor: FishingSupervisor):
+    if not await check_access(message):
+        return
+
+    supervisor.command_queue.put({
+        "type": "shutdown",
+    })
+
+    await message.answer("Рыболовный бот выключен")
 
 
 def run_telegram_bot(supervisor: FishingSupervisor):

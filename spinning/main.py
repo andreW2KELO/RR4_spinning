@@ -1,5 +1,6 @@
 from PyQt5.QtWidgets import QMainWindow, QApplication
 from PyQt5.QtGui import QValidator
+from PyQt5.QtCore import QTimer
 from interface import Ui_MainWindow
 import sys
 from NewOOPSpinning import main_app, BotConfig
@@ -13,8 +14,16 @@ def convert_into_boolean(st: str):
     return False
 
 
-def run_bot_process(config: BotConfig):
-    asyncio.run(main_app(config=config))
+def run_bot_process(
+        config: BotConfig,
+        stop_event,
+):
+    asyncio.run(
+        main_app(
+            config=config,
+            stop_event=stop_event,
+        )
+    )
 
 
 class YesNoValidator(QValidator):
@@ -47,7 +56,34 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.is_rainbow_line.setValidator(YesNoValidator(self.is_rainbow_line))
 
         self.bot_process = None
+        self.stop_event = None
+
         self.play.clicked.connect(self.run)
+
+        self.process_timer = QTimer(self)
+        self.process_timer.timeout.connect(
+            self.check_bot_process
+        )
+        self.process_timer.start(300)
+
+    def check_bot_process(self):
+        if self.bot_process is None:
+            self.play.setEnabled(True)
+            return
+
+        if self.bot_process.is_alive():
+            return
+
+        self.bot_process.join(timeout=0.1)
+        self.bot_process = None
+        self.stop_event = None
+
+        self.play.setEnabled(True)
+
+        print(
+            "Бот остановлен. "
+            "Можно изменить настройки и запустить заново"
+        )
 
     def update_state(self):
         fields = (self.n_tips, self.throw_power)
@@ -75,9 +111,15 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 self.is_rainbow_line.text() or "нет"
             ),
         )
+
+        self.stop_event = mp.Event()
+
         self.bot_process = mp.Process(
             target=run_bot_process,
-            args=(config,),
+            args=(
+                config,
+                self.stop_event,
+            ),
         )
 
         self.bot_process.start()
