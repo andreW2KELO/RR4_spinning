@@ -1,6 +1,7 @@
 from aiogram import Bot, Dispatcher, types, Router
 from aiogram.filters import Command
 from aiogram.types import BufferedInputFile
+from aiogram import F
 from io import BytesIO
 from PIL import ImageGrab
 import os
@@ -17,7 +18,21 @@ TOKEN = os.getenv('TELEGRAM_BOT_TOKEN')
 AUTHORIZED_USER_IDS = {
     1923926414,
 }
+
 router = Router()
+
+main_keyboard = types.ReplyKeyboardMarkup(
+    keyboard=[
+        [
+            types.KeyboardButton(text="📋 Команды"),
+            types.KeyboardButton(text="📊 Сегодня"),
+        ]
+    ],
+    resize_keyboard=True,
+    is_persistent=True,
+    one_time_keyboard=False,
+    input_field_placeholder="Выберите команду",
+)
 
 
 async def check_access(message: types.Message) -> bool:
@@ -28,56 +43,7 @@ async def check_access(message: types.Message) -> bool:
     return True
 
 
-@router.message(Command('myid'))
-async def cmd_start(message: types.Message):
-    await message.answer(f"Ваш id {message.from_user.id}")
-
-
-@router.message(Command('stats'))
-async def cmd_start(message: types.Message):
-    if not await check_access(message):
-        return
-
-    parts = message.text.split()
-    if len(parts) < 2:
-        await message.answer(
-            "Формат: /stats <день в формате дд.мм.гггг>"
-        )
-        return
-
-    stats = await asyncio.to_thread(
-        FishDataBase.get_statistics_by_day,
-        day=datetime.strptime(parts[1], "%d.%m.%Y"),
-    )
-
-    await message.answer(f"Статистика за {parts[1]}\n"
-                         f"Всего было поймано: {stats['today']}\n"
-                         f"Зачётных: {stats['zach']}\n"
-                         f"Трофейных: {stats['trof']}\n"
-                         f"Редких трофеев: {stats['blue']}")
-
-
-@router.message(Command('today'))
-async def cmd_start(message: types.Message):
-    if not await check_access(message):
-        return
-
-    stats = await asyncio.to_thread(
-        FishDataBase.get_statistics_by_day,
-        day=message.date,
-    )
-    await message.answer(f"Статистика за сегодня\n"
-                         f"Кол-во рыб: {stats['today']}\n"
-                         f"Зачётных: {stats['zach']}\n"
-                         f"Трофейных: {stats['trof']}\n"
-                         f"Редких трофеев: {stats['blue']}")
-
-
-@router.message(Command('start'))
-async def cmd_start(message: types.Message):
-    if not await check_access(message):
-        return
-
+async def send_commands(message: types.Message):
     await message.answer(
         "🎣 Управление ботом Russian Fishing 4\n\n"
 
@@ -111,12 +77,74 @@ async def cmd_start(message: types.Message):
         "/click 960 540\n"
         "/click 960 540 right\n"
         "/click_text ПРОДАТЬ\n"
-        "/move forward 3"
+        "/move forward 3",
+        reply_markup=main_keyboard,
     )
 
 
+async def send_today_statistics(message: types.Message):
+    stats = await asyncio.to_thread(
+        FishDataBase.get_statistics_by_day,
+        day=message.date,
+    )
+    await message.answer(f"Статистика за сегодня\n"
+                         f"Кол-во рыб: {stats['today']}\n"
+                         f"Зачётных: {stats['zach']}\n"
+                         f"Трофейных: {stats['trof']}\n"
+                         f"Редких трофеев: {stats['blue']}")
+
+
+@router.message(Command("start"))
+async def start_command(message: types.Message):
+    await send_commands(message)
+
+
+@router.message(F.text == "📋 Команды")
+async def commands_button(message: types.Message):
+    await send_commands(message)
+
+
+@router.message(Command('myid'))
+async def myid_command(message: types.Message):
+    await message.answer(f"Ваш id {message.from_user.id}")
+
+
+@router.message(Command('stats'))
+async def stats_command(message: types.Message):
+    if not await check_access(message):
+        return
+
+    parts = message.text.split()
+    if len(parts) < 2:
+        await message.answer(
+            "Формат: /stats <день в формате дд.мм.гггг>"
+        )
+        return
+
+    stats = await asyncio.to_thread(
+        FishDataBase.get_statistics_by_day,
+        day=datetime.strptime(parts[1], "%d.%m.%Y"),
+    )
+
+    await message.answer(f"Статистика за {parts[1]}\n"
+                         f"Всего было поймано: {stats['today']}\n"
+                         f"Зачётных: {stats['zach']}\n"
+                         f"Трофейных: {stats['trof']}\n"
+                         f"Редких трофеев: {stats['blue']}")
+
+
+@router.message(Command('today'))
+async def today_command(message: types.Message):
+    await send_today_statistics(message)
+
+
+@router.message(F.text == "📊 Сегодня")
+async def today_button(message: types.Message):
+    await send_today_statistics(message)
+
+
 @router.message(Command("screen"))
-async def screen(message: types.Message):
+async def screen_command(message: types.Message):
     if not await check_access(message):
         return
 
@@ -237,7 +265,7 @@ async def restart_command(message: types.Message, supervisor: FishingSupervisor)
 
 
 @router.message(Command("pause"))
-async def restart_command(message: types.Message, supervisor: FishingSupervisor):
+async def pause_command(message: types.Message, supervisor: FishingSupervisor):
     if not await check_access(message):
         return
 
@@ -249,7 +277,7 @@ async def restart_command(message: types.Message, supervisor: FishingSupervisor)
 
 
 @router.message(Command("resume"))
-async def restart_command(message: types.Message, supervisor: FishingSupervisor):
+async def resume_command(message: types.Message, supervisor: FishingSupervisor):
     if not await check_access(message):
         return
 
@@ -261,7 +289,7 @@ async def restart_command(message: types.Message, supervisor: FishingSupervisor)
 
 
 @router.message(Command("shutdown"))
-async def restart_command(message: types.Message, supervisor: FishingSupervisor):
+async def shutdown_command(message: types.Message, supervisor: FishingSupervisor):
     if not await check_access(message):
         return
 

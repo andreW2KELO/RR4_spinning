@@ -840,9 +840,18 @@ class FishingBot:
             elif command_type == "click_text":
                 self.execute_click_text_command(command)
 
+            elif command_type == "shutdown_worker":
+                self.input.force_reset()
+
+                raise SystemExit
+
             elif command_type == "shutdown":
                 self.input.force_reset()
-                raise SystemExit
+
+                if self.stop_event is not None:
+                    self.stop_event.set()
+
+                return
 
     def execute_click_text_command(self, command: dict):
         target = str(command["text"]).strip()
@@ -1143,7 +1152,7 @@ class FishingSupervisor:
 
         if process.is_alive():
             self.command_queue.put({
-                "type": "shutdown",
+                "type": "shutdown_worker",
             })
 
             process.join(timeout=3)
