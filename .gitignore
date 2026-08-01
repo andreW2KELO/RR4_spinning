@@ -5,7 +5,10 @@ __pycache__/
 .idea
 # C extensions
 *.so
-
+*.db
+*.db-journal
+*.db-shm
+*.db-wal
 # Distribution / packaging
 .Python
 build/
