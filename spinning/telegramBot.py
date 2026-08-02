@@ -24,13 +24,13 @@ router = Router()
 main_keyboard = types.ReplyKeyboardMarkup(
     keyboard=[
         [
-            types.KeyboardButton(text="📋 Команды"),
+            types.KeyboardButton(text="🖥️ Экран"),
             types.KeyboardButton(text="📊 Сегодня"),
         ]
     ],
     resize_keyboard=True,
-    is_persistent=True,
-    one_time_keyboard=False,
+    # is_persistent=True,
+    # one_time_keyboard=False,
     input_field_placeholder="Выберите команду",
 )
 
@@ -43,7 +43,34 @@ async def check_access(message: types.Message) -> bool:
     return True
 
 
-async def send_commands(message: types.Message):
+async def send_screenshot(message: types.Message):
+    screenshot = ImageGrab.grab()
+
+    buffer = BytesIO()
+    screenshot.save(buffer, format="JPEG", quality=85)
+
+    photo = BufferedInputFile(
+        buffer.getvalue(),
+        filename="screen.jpg",
+    )
+
+    await message.answer_photo(photo)
+
+
+async def send_today_statistics(message: types.Message):
+    stats = await asyncio.to_thread(
+        FishDataBase.get_statistics_by_day,
+        day=message.date,
+    )
+    await message.answer(f"Статистика за сегодня\n"
+                         f"Кол-во рыб: {stats['today']}\n"
+                         f"Зачётных: {stats['zach']}\n"
+                         f"Трофейных: {stats['trof']}\n"
+                         f"Редких трофеев: {stats['blue']}")
+
+
+@router.message(Command("start"))
+async def start_command(message: types.Message):
     await message.answer(
         "🎣 Управление ботом Russian Fishing 4\n\n"
 
@@ -80,28 +107,6 @@ async def send_commands(message: types.Message):
         "/move forward 3",
         reply_markup=main_keyboard,
     )
-
-
-async def send_today_statistics(message: types.Message):
-    stats = await asyncio.to_thread(
-        FishDataBase.get_statistics_by_day,
-        day=message.date,
-    )
-    await message.answer(f"Статистика за сегодня\n"
-                         f"Кол-во рыб: {stats['today']}\n"
-                         f"Зачётных: {stats['zach']}\n"
-                         f"Трофейных: {stats['trof']}\n"
-                         f"Редких трофеев: {stats['blue']}")
-
-
-@router.message(Command("start"))
-async def start_command(message: types.Message):
-    await send_commands(message)
-
-
-@router.message(F.text == "📋 Команды")
-async def commands_button(message: types.Message):
-    await send_commands(message)
 
 
 @router.message(Command('myid'))
@@ -143,22 +148,20 @@ async def today_button(message: types.Message):
     await send_today_statistics(message)
 
 
+@router.message(F.text == "🖥️ Экран")
+async def screen_button(message: types.Message):
+    if not await check_access(message):
+        return
+
+    await send_screenshot(message)
+
+
 @router.message(Command("screen"))
 async def screen_command(message: types.Message):
     if not await check_access(message):
         return
 
-    screenshot = ImageGrab.grab()
-
-    buffer = BytesIO()
-    screenshot.save(buffer, format="JPEG", quality=85)
-
-    photo = BufferedInputFile(
-        buffer.getvalue(),
-        filename="screen.jpg",
-    )
-
-    await message.answer_photo(photo)
+    await send_screenshot(message)
 
 
 @router.message(Command("click"))
